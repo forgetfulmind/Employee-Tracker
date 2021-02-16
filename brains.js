@@ -1,6 +1,7 @@
 const { Console } = require('console');
 const inquirer = require('inquirer')
-const mysql = require('mysql')
+const mysql = require('mysql');
+const { title } = require('process');
 
 const connection = mysql.createConnection({
     host: 'localhost',
@@ -89,6 +90,114 @@ const rootChoice = ()=>{
       });
   }
 
+  const addEmployee = ()=>{
+    connection.query('SELECT roles.title FROM roles', (err,res)=>{
+        if (err) throw err;
+    inquirer
+    .prompt([
+        {
+            type: 'input',
+            message: 'What is the employees first name? ',
+            name: 'firstName' 
+        },
+        {
+            type: 'input',
+            message: 'What is the employees last name? ',
+            name: 'lastName' 
+        },
+        {
+            name: 'roleChoice',
+            type: 'rawlist',
+            choices(){
+                    let arr = [];
+                    res.forEach(({title}) => {
+                       arr.push(title)
+                    });
+                return arr;
+
+            },
+            message: 'What is the employees role? ',
+        },
+        {
+            name: 'managerChoice',
+            type: 'rawlist',
+            choices(){
+                return new Promise((resolve, reject)=>{
+                    connection.query('SELECT employees.first_name, employees.last_name FROM employees', (err,res)=>{
+                        //console.log(res)
+                        let arr = ["No Manager"];
+                        res.forEach(({first_name, last_name}) => {
+
+                           arr.push(`${first_name} ${last_name}`)
+                        });
+                        //console.log(arr)
+                        resolve(arr);
+                })
+                })
+            },
+            message: 'Does the Employee have a Manager? ',
+        },
+    ])
+    .then((response)=>{
+
+        let roleID; 
+        function getRole(){
+            return new Promise((resolve, reject)=>{
+                connection.query('SELECT roles.id FROM roles WHERE ?',
+                {title: response.roleChoice},
+                (err,res)=>{
+                    roleID = res[0].id
+                    resolve(getManager());
+               })
+            })
+        }
+
+        let managerChoice = response.managerChoice.split(" ")
+
+        let managerID;
+        function getManager(){
+            new Promise((resolve, reject)=>{
+                if(response.managerChoice !== "No Manager"){
+                    connection.query('SELECT employees.id FROM employees WHERE ? AND ?',
+                    [
+                        {
+                            first_name: managerChoice[0],
+                        }, 
+                        {
+                            last_name: managerChoice[1],
+                        },
+                ],
+                    (err,res)=>{
+                        managerID = res[0].id
+                        resolve(insertEmployee());
+                   })
+                }
+          })
+        }
+
+        function insertEmployee(){
+            connection.query(
+                'INSERT INTO employees SET ?',
+                {
+                    first_name: response.firstName, 
+                    last_name: response.lastName, 
+                    role_id: roleID, 
+                    manager_id: managerID
+                },
+                (err, res) => {
+                  if (err) throw err;
+                  console.log(`${res.affectedRows} employee created!\n`);
+                  // Call updateProduct AFTER the INSERT completes
+                  rootChoice();
+                }
+            )
+        }
+    
+        getRole()
+
+    })
+   })
+  }
 
 
 
