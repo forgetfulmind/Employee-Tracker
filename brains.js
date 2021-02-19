@@ -171,7 +171,7 @@ const rootChoice = ()=>{
                         managerID = res[0].id
                         resolve(insertEmployee());
                    })
-                }
+                }else{resolve(insertEmployee())}
           })
         }
 
@@ -198,6 +198,97 @@ const rootChoice = ()=>{
     })
    })
   }
+
+  const addDepartment = ()=>{
+    inquirer
+    .prompt([
+        {
+            type: 'input',
+            message: 'What is the name of the department you would like to add? ',
+            name: 'newDept' 
+        }
+    ])
+    .then((response)=>{
+        connection.query( 'INSERT INTO departments SET ?',
+                {
+                    dept_name: response.newDept, 
+                },
+                (err, res) => {
+                  if (err) throw err;
+                  console.log(`${res.affectedRows} department created!\n`);
+                  // Call updateProduct AFTER the INSERT completes
+                  rootChoice();
+                }
+           )
+    })
+  }
+
+
+  const addRole = ()=>{
+    inquirer
+    .prompt([
+        {
+            type: 'input',
+            message: 'What is the name of the Role you would like to add? ',
+            name: 'newRole' 
+        },
+        {
+            type: 'input',
+            message: 'What is the salary of the role you would like to add? ',
+            name: 'newSalary' 
+        },
+        {
+            name: 'addRole',
+            type: 'rawlist',
+            choices(){
+                return new Promise((resolve, reject)=>{
+                    connection.query('SELECT departments.dept_name FROM departments', (err,res)=>{
+                        //console.log(res)
+                        let arr = [];
+                        res.forEach(({dept_name})=>{
+                            arr.push(dept_name)
+                        })
+                        resolve(arr);
+                    })
+                })
+            },
+            message: 'What department is this role part of?',
+        },
+    ])
+    .then((response)=>{
+            let deptID;
+            new Promise((resolve, reject)=>{
+                    connection.query('SELECT departments.id FROM departments WHERE ?',
+                    [
+                        {
+                            dept_name: response.addRole,
+                        }, 
+                ],
+                    (err,res)=>{
+                        deptID = res[0].id
+                        resolve(insertDepartment());
+                   })
+                
+          })
+
+        const insertDepartment = ()=>{
+         connection.query( 'INSERT INTO roles SET ?',
+
+                {
+                    title: response.newRole,
+                    salary: response.newSalary,
+                    department_id: deptID, 
+                },
+                (err, res) => {
+                  if (err) throw err;
+                  console.log(`${res.affectedRows} department created!\n`);
+                  // Call updateProduct AFTER the INSERT completes
+                  rootChoice();
+                }
+              )
+            }
+    })
+  } 
 
 
 
