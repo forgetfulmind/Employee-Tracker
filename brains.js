@@ -26,12 +26,15 @@ const rootChoice = ()=>{
           choices:[
               'View All Employees',
               'Add Employee',
+              `Remove Employee`,
               `Modify an Employee's Manager`,
               `View Employees by Manager`,
               'View All Departments',
               'Add Department',
+              `Remove Department`,
               'View All Roles',
               'Add Role',
+              'Remove Role',
               'Exit',
           ],
           message: 'What would you like to do? ',
@@ -46,18 +49,27 @@ const rootChoice = ()=>{
         case "Add Employee":
             addEmployee()
         break;    
+        case "Remove Employee":
+            removeEmployee()
+        break;    
         case "View All Departments":
             viewDepartments()
         break;
         case "Add Department":
             addDepartment()
         break;
+        case "Remove Department":
+            removeDepartment()
+        break;
         case "View All Roles":
             viewRoles()
         break;
         case "Add Role":
             addRole()
-        break;    
+        break;  
+        case "Remove Role":
+            removeRole()
+        break;      
         case `Modify an Employee's Manager`:
             modEmployee()
         break;  
@@ -95,7 +107,7 @@ const rootChoice = ()=>{
 
 //view all roles  
   const viewRoles = ()=>{
-    connection.query('SELECT roles.id, roles.title, roles.salary, departments.dept_name FROM roles INNER JOIN departments ON roles.department_id=departments.id', (err, res) => {
+    connection.query('SELECT roles.id, roles.title, roles.salary, departments.dept_name FROM roles INNER JOIN departments ON roles.department_id=departments.id ORDER BY roles.id', (err, res) => {
         if (err) throw err;
         // Log all results of the SELECT statement
         console.table(res);
@@ -443,7 +455,6 @@ const rootChoice = ()=>{
           })
         }
 
-//select employees where ID is manager ID 
         function viewChosen(){
             connection.query(
                 'Select * FROM employees WHERE ?',
@@ -467,6 +478,137 @@ const rootChoice = ()=>{
   
     })
   }
+
+//delete employee 
+const removeEmployee = ()=>{
+    inquirer
+    .prompt([
+        {
+            name: 'employeeChoice',
+            type: 'rawlist',
+            choices(){
+                return new Promise((resolve, reject)=>{
+                    connection.query('SELECT employees.first_name, employees.last_name FROM employees', (err,res)=>{
+                        //console.log(res)
+                        let arr = [];
+                        res.forEach(({first_name, last_name}) => {
+
+                           arr.push(`${first_name} ${last_name}`)
+                        });
+                        //console.log(arr)
+                        resolve(arr);
+                })
+                })
+            },
+            message: 'Which Employee would you like to remove? ',
+        },
+    ])
+    .then((response)=>{
+        let employeeChoice = response.employeeChoice.split(" ")
+ 
+            new Promise((resolve, reject)=>{
+                    connection.query('DELETE FROM employees WHERE ? AND ?',
+                    [
+                        {
+                            first_name: employeeChoice[0],
+                        }, 
+                        {
+                            last_name: employeeChoice[1],
+                        },
+                ],
+                    (err,res)=>{
+                        console.log(`${res.affectedRows} employees removed!\n`);
+                        resolve(rootChoice());
+                   })
+
+          })
+  
+    })
+  }
+
+//delete department
+const removeDepartment = ()=>{
+    inquirer
+    .prompt([
+        {
+            name: 'departmentChoice',
+            type: 'rawlist',
+            choices(){
+                return new Promise((resolve, reject)=>{
+                    connection.query('SELECT dept_name FROM departments', (err,res)=>{
+                        let arr = [];
+                        res.forEach(({dept_name})=>{
+                            arr.push(dept_name)
+                        })
+                        resolve(arr);
+                })
+                })
+            },
+            message: 'Which Department would you like to remove? ',
+        },
+    ])
+    .then((response)=>{
+ 
+            new Promise((resolve, reject)=>{
+                    connection.query('DELETE FROM departments WHERE ?',
+                    [
+                        {
+                            dept_name: response.departmentChoice,
+                        }, 
+
+                ],
+                    (err,res)=>{
+                        console.log(`${res.affectedRows} departments removed!\n`);
+                        resolve(rootChoice());
+                   })
+
+          })
+  
+    })
+  }
+
+//delete role
+const removeRole = ()=>{
+    inquirer
+    .prompt([
+        {
+            name: 'roleChoice',
+            type: 'rawlist',
+            choices(){
+                return new Promise((resolve, reject)=>{
+                    connection.query('SELECT title FROM roles', (err,res)=>{
+                        let arr = [];
+                        res.forEach(({title})=>{
+                            arr.push(title)
+                        })
+                        resolve(arr);
+                })
+                })
+            },
+            message: 'Which Role would you like to remove? ',
+        },
+    ])
+    .then((response)=>{
+ 
+            new Promise((resolve, reject)=>{
+                    connection.query('DELETE FROM roles WHERE ?',
+                    [
+                        {
+                            title: response.roleChoice,
+                        }, 
+
+                ],
+                    (err,res)=>{
+                        console.log(`${res.affectedRows} roles removed!\n`);
+                        resolve(rootChoice());
+                   })
+
+          })
+  
+    })
+  }
+
+
 
 
   //init
