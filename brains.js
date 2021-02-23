@@ -13,7 +13,7 @@ const connection = mysql.createConnection({
     user: 'root',
   
     // Be sure to update with your own MySQL password!
-    password: 'D3ath2Sql117',
+    password: process.env.DB_password,
     database: 'employee_tracker_db',
   });
 
@@ -64,7 +64,7 @@ const rootChoice = ()=>{
   })
 }
   const viewEmployees = ()=>{
-    connection.query('SELECT employees.id, employees.first_name, employees.last_name, roles.title, roles.salary, departments.dept_name FROM employees INNER JOIN roles ON employees.role_id=roles.id INNER JOIN departments ON roles.department_id=departments.id', (err, res) => {
+    connection.query('SELECT employees.id, employees.first_name, employees.last_name, roles.title, roles.salary, employees.manager_id, departments.dept_name FROM employees INNER JOIN roles ON employees.role_id=roles.id INNER JOIN departments ON roles.department_id=departments.id', (err, res) => {
         if (err) throw err;
         // Log all results of the SELECT statement
         console.table(res);
