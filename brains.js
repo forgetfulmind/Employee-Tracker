@@ -417,7 +417,7 @@ const rootChoice = ()=>{
             choices(){
                 
                 return new Promise((resolve, reject)=>{
-                    connection.query('SELECT employees.first_name, employees.last_name FROM employees', (err,res)=>{
+                    connection.query('SELECT employees.first_name, employees.last_name FROM employees WHERE employees.id IN (SELECT manager_id FROM employees)', (err,res)=>{
                         //console.log(res)
                         let arr = [];
                         res.forEach(({first_name, last_name}) => {
