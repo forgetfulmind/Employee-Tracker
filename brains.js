@@ -27,9 +27,11 @@ const rootChoice = ()=>{
               'View All Employees',
               'Add Employee',
               `Remove Employee`,
+              `Modify an Employee's Role`,
               `Modify an Employee's Manager`,
               `View Employees by Manager`,
               'View All Departments',
+              //`View a Department's Budget`,
               'Add Department',
               `Remove Department`,
               'View All Roles',
@@ -61,6 +63,9 @@ const rootChoice = ()=>{
         case "Remove Department":
             removeDepartment()
         break;
+        // case "View a Department's Budget":
+        //     moneyDepartment()
+        // break;
         case "View All Roles":
             viewRoles()
         break;
@@ -75,7 +80,10 @@ const rootChoice = ()=>{
         break;  
         case `View Employees by Manager`:
             viewByManager()
-        break;       
+        break;
+        case `Modify an Employee's Role`:
+            modRole()
+        break;         
         case "Exit":
             console.log("okay bye bye")
             connection.end();
@@ -407,6 +415,88 @@ const rootChoice = ()=>{
     })
   }
 
+//modify an employee's role  
+const modRole = ()=>{
+    inquirer
+    .prompt([
+        {
+            name: 'employeeChoice',
+            type: 'rawlist',
+            choices(){
+                return new Promise((resolve, reject)=>{
+                    connection.query('SELECT employees.first_name, employees.last_name FROM employees', (err,res)=>{
+                        //console.log(res)
+                        let arr = [];
+                        res.forEach(({first_name, last_name}) => {
+
+                           arr.push(`${first_name} ${last_name}`)
+                        });
+                        //console.log(arr)
+                        resolve(arr);
+                })
+                })
+            },
+            message: 'Which Employee would you like to modify? ',
+        },
+        {
+            name: 'roleChoice',
+            type: 'rawlist',
+            choices(){
+                return new Promise((resolve, reject)=>{
+                connection.query('SELECT roles.title FROM roles', (err,res)=>{
+                    if (err) throw err;
+                    let arr = [];
+                    res.forEach(({title}) => {
+                       arr.push(title)
+                    });
+                resolve(arr);
+                })
+            })
+            },
+            message: 'What is the employees new role? ',
+        },
+    ])
+    .then((response)=>{
+        let employeeChoice = response.employeeChoice.split(" ")
+        let roleID; 
+        getRole()
+        function getRole(){
+            return new Promise((resolve, reject)=>{
+                connection.query('SELECT roles.id FROM roles WHERE ?',
+                {title: response.roleChoice},
+                (err,res)=>{
+                    roleID = res[0].id
+                    resolve(updateRole());
+               })
+            })
+        }
+
+        function updateRole(){
+            
+            connection.query(
+                'UPDATE employees SET ? WHERE ? AND ?',
+                [
+                    {
+                        role_id: roleID
+                    },
+                    {   first_name: employeeChoice[0],  
+                    },
+                    {
+                        last_name: employeeChoice[1],
+                    },
+                ],
+                (err, res) => {
+                  if (err) throw err;
+                  console.log(`${res.affectedRows} employee's role updated!\n`);
+                  rootChoice();
+                }
+            )
+        }
+  
+    })
+  }
+
+
 //view employees by manager
   const viewByManager = ()=>{
     inquirer
@@ -608,7 +698,44 @@ const removeRole = ()=>{
     })
   }
 
+//view a department's budget 
+// const moneyDepartment = ()=>{
+//     inquirer
+//     .prompt([
+//         {
+//             name: 'departmentChoice',
+//             type: 'rawlist',
+//             choices(){
+//                 return new Promise((resolve, reject)=>{
+//                     connection.query('SELECT dept_name FROM departments', (err,res)=>{
+//                         let arr = [];
+//                         res.forEach(({dept_name})=>{
+//                             arr.push(dept_name)
+//                         })
+//                         resolve(arr);
+//                 })
+//                 })
+//             },
+//             message: `Which Department's budget would you like to view?`,
+//         },
+//     ])
+//     .then((response)=>{
+//         let deptID;
+//         new Promise((resolve, reject)=>{
+//                 connection.query('SELECT id FROM departments WHERE ?',
+//                 [
+//                     {
+//                         dept_name: response.departmentChoice,
+//                     }, 
+//                 ],
+//                 (err,res)=>{
+//                     deptID = res[0].id
+//                     resolve();
+//                })
+//         })
 
+//     })
+// }
 
 
   //init

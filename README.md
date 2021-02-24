@@ -53,4 +53,4 @@
 
  <a name="walkthrough"><h3>Walkthrough:</h3></a>  
 
- ![walkthrough](./employee_tracker_walkthrough.gif)
+ ![walkthrough](./employee-management_walkthrough.gif)
